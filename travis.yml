@@ -1,0 +1,76 @@
+language: python
+sudo: false
+dist: trusty
+os: linux
+
+# Note: graphviz is needed for grapgs embedded in the docs
+addons:
+  apt:
+    packages:
+      - graphviz
+      - libvirt-dev
+
+      
+matrix:
+  fast_finish: true
+  include:
+    - python: 2.7
+    - python: 3.4
+    - python: 3.5
+    - python: 3.6
+    - python: 3.7
+      dist: xenial
+      sudo: required
+    - python: pypy
+    - python: pypy3
+    - env: ENV=checks
+      python: 2.7
+      before_script: TOX_ENV=checks
+    - env: ENV=lint
+      python: 2.7
+      before_script: TOX_ENV=lint
+    - env: ENV=pylint
+      python: 2.7
+      before_script: TOX_ENV=pylint
+    - env: ENV=coverage
+      python: 2.7
+      before_script: TOX_ENV=coverage-travis
+    - env:
+        - ENV=docs
+        - secure: "d4F2RE2iWFh6yqE5MUxnakDihBMsY/hMsaMWllVAYU/fvCMKhaW97d51EiS55kur/eNVX2jpEqkVkSu5VeNSxC3w9sZTG+dHVb8A43o9QaSCPngvHTZ4X9fx8lB96G7uju6pmm5ovKt85hxZW2uQNYo3ugwCUl94lVDYqo+KJUM="
+      python: 3.5
+      before_script: TOX_ENV=docs-travis
+      # Note: graphviz is needed for grapgs embedded in the docs
+      addons:
+        apt:
+          packages:
+            - graphviz
+            - gcc
+            - libvirt-dev
+      # Trigger ReadTheDocs build on docs builder
+      after_success:
+        - pip3 install requests
+        - python3 ./contrib/trigger_rtd_build.py
+
+install:
+  - pip install --upgrade "pip==9.0.1"
+  - pip install "virtualenv==15.1.0"
+  - pip install "tox==3.12.1"
+  - TOX_ENV=py$TRAVIS_PYTHON_VERSION
+
+script:
+  - tox -e $TOX_ENV
+
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip # pip cache
+    - .tox
+
+notifications:
+  # Disabled until ASF switches to new mailing list software
+  # when we can whitelist addresses
+  #email:
+  #  - "notifications@libcloud.apache.org"
+  irc:
+    - "chat.freenode.net#libcloud"
